@@ -14,9 +14,6 @@ RUN npm run build
 FROM node:22-alpine AS backend-builder
 WORKDIR /app/backend
 
-# Install build dependencies for better-sqlite3 native bindings
-RUN apk add --no-cache python3 make g++
-
 COPY backend/package*.json ./
 RUN npm ci
 
@@ -30,14 +27,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Install runtime dependencies for better-sqlite3
-RUN apk add --no-cache libstdc++
-
 WORKDIR /app/backend
 COPY backend/package*.json ./
-RUN apk add --no-cache python3 make g++ && \
-    npm ci --omit=dev && \
-    apk del python3 make g++
+RUN npm ci --omit=dev
 
 # Copy built backend
 COPY --from=backend-builder /app/backend/dist ./dist

@@ -43,6 +43,7 @@ test("authenticates with valid credentials, loads kanban, and logs out", async (
 });
 
 test("adds a card to a column when signed in", async ({ page }) => {
+  const cardTitle = `Playwright card ${Date.now()}`;
   await page.goto("/");
   await page.getByLabel("Username").fill("user");
   await page.getByLabel("Password").fill("password");
@@ -50,10 +51,10 @@ test("adds a card to a column when signed in", async ({ page }) => {
 
   const firstColumn = page.locator('[data-testid^="column-"]').first();
   await firstColumn.getByRole("button", { name: /add a card/i }).click();
-  await firstColumn.getByPlaceholder("Card title").fill("Playwright card");
+  await firstColumn.getByPlaceholder("Card title").fill(cardTitle);
   await firstColumn.getByPlaceholder("Details").fill("Added via e2e.");
   await firstColumn.getByRole("button", { name: /add card/i }).click();
-  await expect(firstColumn.getByText("Playwright card")).toBeVisible();
+  await expect(firstColumn.getByText(cardTitle)).toBeVisible();
 });
 
 test("moves a card between columns when signed in", async ({ page }) => {
@@ -82,4 +83,33 @@ test("moves a card between columns when signed in", async ({ page }) => {
   );
   await page.mouse.up();
   await expect(targetColumn.getByTestId("card-card-1")).toBeVisible();
+});
+
+test("persists board state across page reloads via backend API", async ({ page }) => {
+  const uniqueCardTitle = `Persistent Card ${Date.now()}`;
+  await page.goto("/");
+  await page.getByLabel("Username").fill("user");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: "Sign In" }).click();
+
+  // Rename first column to 'Priorities'
+  const firstColumn = page.locator('[data-testid^="column-"]').first();
+  const titleInput = firstColumn.getByLabel("Column title");
+  await titleInput.clear();
+  await titleInput.fill("Priorities");
+
+  // Add a unique persistent card
+  await firstColumn.getByRole("button", { name: /add a card/i }).click();
+  await firstColumn.getByPlaceholder("Card title").fill(uniqueCardTitle);
+  await firstColumn.getByPlaceholder("Details").fill("Stored in SQLite backend.");
+  await firstColumn.getByRole("button", { name: /add card/i }).click();
+  await expect(firstColumn.getByText(uniqueCardTitle)).toBeVisible();
+
+  // Reload the browser page
+  await page.reload();
+
+  // Verify persistence from the database
+  const reloadedFirstColumn = page.locator('[data-testid^="column-"]').first();
+  await expect(reloadedFirstColumn.getByLabel("Column title")).toHaveValue("Priorities");
+  await expect(page.getByText(uniqueCardTitle)).toBeVisible();
 });

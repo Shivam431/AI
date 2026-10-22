@@ -2,11 +2,18 @@ import express from "express";
 import cors from "cors";
 import path from "node:path";
 import dotenv from "dotenv";
+import { type DatabaseSync } from "node:sqlite";
+import { initDatabase } from "./db.js";
+import { createKanbanRouter } from "./routes/kanban.js";
 
 dotenv.config();
 
-export const createApp = () => {
+export const createApp = (dbOrPath?: DatabaseSync | string) => {
   const app = express();
+  const db =
+    typeof dbOrPath === "object" && dbOrPath !== null
+      ? dbOrPath
+      : initDatabase(typeof dbOrPath === "string" ? dbOrPath : undefined);
 
   app.use(cors());
   app.use(express.json());
@@ -15,6 +22,9 @@ export const createApp = () => {
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
+
+  // Kanban persistence API
+  app.use("/api/board", createKanbanRouter(db));
 
   // Serve static files (such as statically built NextJS frontend or demo HTML)
   const publicDir = path.resolve(process.cwd(), "public");
