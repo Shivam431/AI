@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { type DatabaseSync } from "node:sqlite";
 import { initDatabase } from "./db.js";
 import { createKanbanRouter } from "./routes/kanban.js";
+import { createAiRouter } from "./routes/ai.js";
 
 dotenv.config();
 
@@ -25,6 +26,9 @@ export const createApp = (dbOrPath?: DatabaseSync | string) => {
 
   // Kanban persistence API
   app.use("/api/board", createKanbanRouter(db));
+
+  // AI assistant API
+  app.use("/api/ai", createAiRouter(db));
 
   // Serve static files (such as statically built NextJS frontend or demo HTML)
   const publicDir = path.resolve(process.cwd(), "public");

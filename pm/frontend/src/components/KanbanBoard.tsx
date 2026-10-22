@@ -13,6 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
+import { AiChatSidebar } from "@/components/AiChatSidebar";
 import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
 import { useAuth } from "@/lib/auth";
 import { fetchBoard, saveBoard } from "@/lib/api";
@@ -22,6 +23,7 @@ export const KanbanBoard = () => {
   const { user, logout } = useAuth();
   const [board, setBoard] = useState<BoardData>(() => initialData);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [isAiOpen, setIsAiOpen] = useState(false);
 
   // Load board from backend database on mount or user change
   useEffect(() => {
@@ -153,6 +155,14 @@ export const KanbanBoard = () => {
               </div>
               {user && (
                 <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsAiOpen((prev) => !prev)}
+                    className="flex items-center gap-2 rounded-full border border-[var(--primary-blue)] bg-[var(--primary-blue)] px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:opacity-95 active:scale-95"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-[var(--accent-yellow)]" />
+                    AI Assistant
+                  </button>
                   <span className="text-xs font-medium text-[var(--gray-text)]">
                     Signed in as <strong className="text-[var(--navy-dark)]">{user}</strong>
                   </span>
@@ -207,6 +217,13 @@ export const KanbanBoard = () => {
           </DragOverlay>
         </DndContext>
       </main>
+
+      <AiChatSidebar
+        isOpen={isAiOpen}
+        onClose={() => setIsAiOpen(false)}
+        onBoardUpdate={persistBoard}
+        username={user || "user"}
+      />
     </div>
   );
 };
