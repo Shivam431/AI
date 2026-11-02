@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { sendAiChatMessage, type AiChatMessage } from "@/lib/api";
 import { type BoardData } from "@/lib/kanban";
 
@@ -27,6 +27,51 @@ export const AiChatSidebar = ({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Prevent background scrolling of the main panel
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+
+    // Compensate for scrollbar width to prevent layout shift
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    // Intercept background touch and wheel events outside sidebar
+    const handleTouchMove = (e: TouchEvent) => {
+      const sidebar = document.querySelector('[data-testid="ai-sidebar"]');
+      if (sidebar && !sidebar.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      const sidebar = document.querySelector('[data-testid="ai-sidebar"]');
+      if (sidebar && !sidebar.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("wheel", handleWheel);
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -68,7 +113,7 @@ export const AiChatSidebar = ({
     <aside
       aria-label="AI Project Assistant Sidebar"
       data-testid="ai-sidebar"
-      className="fixed bottom-0 right-0 top-0 z-50 flex w-full flex-col border-l border-[var(--stroke)] bg-white/95 shadow-2xl backdrop-blur-md sm:w-[420px]"
+      className="fixed bottom-0 right-0 top-0 z-50 flex w-full flex-col border-l border-[var(--stroke)] bg-white/95 shadow-2xl backdrop-blur-md sm:w-[420px] overscroll-contain"
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[var(--stroke)] px-6 py-5">
@@ -89,7 +134,7 @@ export const AiChatSidebar = ({
       </div>
 
       {/* Message list */}
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6 overscroll-contain">
         {messages.map((msg, idx) => (
           <div
             key={idx}
