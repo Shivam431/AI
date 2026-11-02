@@ -15,7 +15,7 @@ export const SignIn = () => {
 
     const success = login(username, password);
     if (!success) {
-      setError("Invalid credentials. Use username 'user' and password 'password'.");
+      setError("Invalid credentials.");
     }
   };
 
@@ -93,11 +93,6 @@ export const SignIn = () => {
           >
             Sign In
           </button>
-
-          <p className="mt-1 text-center text-xs text-[var(--gray-text)]">
-            Hint: Use username <span className="font-semibold text-[var(--navy-dark)]">user</span> and password{" "}
-            <span className="font-semibold text-[var(--navy-dark)]">password</span>
-          </p>
         </form>
       </div>
     </div>
